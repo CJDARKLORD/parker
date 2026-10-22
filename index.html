@@ -26,11 +26,10 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 110px; /* Место под нижнюю панель */
+            padding-bottom: 110px;
             overflow-x: hidden;
         }
 
-        /* Шапка */
         header {
             padding: 24px 20px 16px;
             position: sticky;
@@ -52,7 +51,6 @@
             line-height: 1.4;
         }
 
-        /* Сетка карточек */
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -60,7 +58,6 @@
             padding: 0 20px 20px;
         }
 
-        /* Карточка */
         .card {
             background-color: var(--card-bg);
             border-radius: var(--border-radius);
@@ -133,7 +130,6 @@
 
         .card.done .card-img { opacity: 1; }
 
-        /* Нижняя панель */
         .bottom-bar {
             position: fixed;
             bottom: 0;
@@ -187,7 +183,6 @@
             z-index: 1;
         }
 
-        /* Оверлей с маской */
         .camera-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -196,7 +191,7 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 40px 20px;
-            pointer-events: none; /* Пропускаем клики сквозь оверлей */
+            pointer-events: none;
         }
 
         .camera-header {
@@ -206,13 +201,13 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
-        /* Сама маска (белый контур) */
+        /* Маска машины */
         .mask-svg {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
-            height: 80%;
+            width: 90%;
+            height: auto;
             opacity: 0.6;
         }
 
@@ -220,7 +215,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            pointer-events: auto; /* Возвращаем клики для кнопок */
+            pointer-events: auto;
             padding-bottom: 20px;
         }
 
@@ -245,13 +240,52 @@
             background: var(--accent);
             border: 4px solid white;
             cursor: pointer;
-            margin: 0 auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
         .btn-shutter:active { transform: scale(0.95); }
 
-        /* Превью */
+        /* --- АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ ЭКРАН --- */
+        @media (orientation: landscape) {
+            .camera-overlay {
+                padding: 20px;
+            }
+            .camera-header {
+                position: absolute;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+            }
+            /* Переносим кнопки на правую сторону, как в настоящей камере */
+            .camera-controls {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                height: 100%;
+                gap: 20px;
+                padding-bottom: 0;
+            }
+            .btn-close {
+                position: absolute;
+                top: 20px;
+                left: 20px;
+            }
+            .mask-svg {
+                width: 70%; /* Чуть уменьшаем, чтобы влезала в широкий экран */
+                max-width: 600px;
+            }
+            .btn-shutter {
+                width: 80px;
+                height: 80px;
+            }
+        }
+
+        /* --- ЭКРАН ПРЕВЬЮ --- */
         #preview-view {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -265,8 +299,10 @@
         #preview-img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
+            transition: object-fit 0.2s;
         }
+
     </style>
 </head>
 <body>
@@ -290,7 +326,7 @@
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
-            <!-- Контур машины (упрощенный) -->
+            <!-- Контур машины -->
             <svg class="mask-svg" viewBox="0 0 200 100" fill="none" stroke="white" stroke-width="2">
                 <path d="M 20,80 L 20,50 C 30,50 40,30 60,20 L 140,20 C 160,30 170,50 180,50 L 180,80 C 180,90 170,90 160,90 C 150,90 140,80 140,80 L 60,80 C 60,80 50,90 40,90 C 30,90 20,90 20,80 Z" />
                 <circle cx="50" cy="85" r="12" />
@@ -300,14 +336,15 @@
             <div class="camera-controls">
                 <button class="btn-close" onclick="closeCamera()">✕</button>
                 <button class="btn-shutter" onclick="capturePhoto()"></button>
-                <div style="width: 50px;"></div> <!-- Пустой блок для центровки кнопки -->
+                <!-- Пустой блок для правильной центровки -->
+                <div style="width: 50px; height: 50px;"></div>
             </div>
         </div>
     </div>
 
     <!-- ЭКРАН ПРЕВЬЮ -->
     <div id="preview-view">
-        <img id="preview-img" src="">
+        <img id="preview-img" src="" onclick="togglePreviewFit(this)">
         <div class="bottom-bar" style="background: black; border-top: none;">
             <button class="btn btn-secondary" onclick="retakePhoto()">Переснять</button>
             <button class="btn btn-primary" onclick="confirmPhoto()">ОК</button>
@@ -342,7 +379,6 @@
 
         const cameraSvg = `<svg class="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
 
-        // Отрисовка карточек
         angles.forEach(angle => {
             const card = document.createElement('div');
             card.className = 'card';
@@ -377,10 +413,16 @@
             cameraView.classList.add('active');
             
             try {
-                // Запрашиваем заднюю камеру
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
+                // Запрашиваем камеру с максимальным разрешением
+                const constraints = {
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
             } catch (err) {
                 alert('Ошибка доступа к камере: ' + err.message);
@@ -400,38 +442,67 @@
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             
-            // Сжимаем фото до 1600px по большей стороне
+            let vw = video.videoWidth;
+            let vh = video.videoHeight;
+            
+            // Проверяем, как сейчас повернут телефон
+            const isLandscape = window.innerWidth > window.innerHeight;
+            
+            // Если телефон горизонтально, а видео пришло вертикально (или наоборот) — исправляем
+            if (isLandscape && vw < vh) {
+                canvas.width = vh;
+                canvas.height = vw;
+                context.translate(vh / 2, vw / 2);
+                context.rotate((90 * Math.PI) / 180);
+                context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+            } else if (!isLandscape && vw > vh) {
+                canvas.width = vh;
+                canvas.height = vw;
+                context.translate(vh / 2, vw / 2);
+                context.rotate((-90 * Math.PI) / 180);
+                context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+            } else {
+                canvas.width = vw;
+                canvas.height = vh;
+                context.drawImage(video, 0, 0, vw, vh);
+            }
+            
+            // Теперь сжимаем до 1600px по большей стороне
             const MAX_SIZE = 1600;
-            let width = video.videoWidth;
-            let height = video.videoHeight;
+            let finalWidth = canvas.width;
+            let finalHeight = canvas.height;
 
-            if (width > height && width > MAX_SIZE) {
-                height = Math.round(height * (MAX_SIZE / width));
-                width = MAX_SIZE;
-            } else if (height > MAX_SIZE) {
-                width = Math.round(width * (MAX_SIZE / height));
-                height = MAX_SIZE;
+            if (finalWidth > finalHeight && finalWidth > MAX_SIZE) {
+                finalHeight = Math.round(finalHeight * (MAX_SIZE / finalWidth));
+                finalWidth = MAX_SIZE;
+            } else if (finalHeight > MAX_SIZE) {
+                finalWidth = Math.round(finalWidth * (MAX_SIZE / finalHeight));
+                finalHeight = MAX_SIZE;
             }
 
-            canvas.width = width;
-            canvas.height = height;
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = finalWidth;
+            finalCanvas.height = finalHeight;
+            const finalCtx = finalCanvas.getContext('2d');
+            finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
             
-            // Рисуем кадр с видео на канвас
-            context.drawImage(video, 0, 0, width, height);
+            capturedBase64 = finalCanvas.toDataURL('image/jpeg', 0.8);
             
-            // Получаем Base64 с качеством 0.8 (JPEG)
-            capturedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Останавливаем камеру и показываем превью
             closeCamera();
+            
+            previewImg.style.objectFit = 'cover';
             previewImg.src = capturedBase64;
             previewView.classList.add('active');
+        }
+
+        // Переключение вида превью по тапу (обрезано/целиком)
+        function togglePreviewFit(img) {
+            img.style.objectFit = img.style.objectFit === 'cover' ? 'contain' : 'cover';
         }
 
         function retakePhoto() {
             previewView.classList.remove('active');
             capturedBase64 = null;
-            // Возвращаемся к камере
             const angle = angles.find(a => a.id === currentAngleId);
             openCamera(currentAngleId, angle.label);
         }
