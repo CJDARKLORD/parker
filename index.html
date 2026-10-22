@@ -26,7 +26,8 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 90px; /* Место под нижнюю панель */
+            padding-bottom: 110px; /* Место под нижнюю панель */
+            overflow-x: hidden;
         }
 
         /* Шапка */
@@ -75,13 +76,8 @@
             border: 1px solid transparent;
         }
 
-        .card:active {
-            transform: scale(0.97);
-        }
-
-        .card.done {
-            border-color: var(--success);
-        }
+        .card:active { transform: scale(0.97); }
+        .card.done { border-color: var(--success); }
 
         .card.done::after {
             content: '✓';
@@ -101,13 +97,8 @@
             z-index: 2;
         }
 
-        .card.done .card-label {
-            color: var(--text-muted);
-        }
-
-        .card.done .icon-camera {
-            opacity: 0.1;
-        }
+        .card.done .card-label { color: var(--text-muted); }
+        .card.done .icon-camera { opacity: 0.1; }
 
         .card-label {
             position: absolute;
@@ -119,9 +110,9 @@
             font-weight: 500;
             z-index: 2;
             text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
-        /* Иконка камеры-заглушки */
         .icon-camera {
             width: 32px;
             height: 32px;
@@ -129,7 +120,6 @@
             margin-bottom: 15px;
         }
 
-        /* Фейковое фото для демонстрации */
         .card-img {
             width: 100%;
             height: 100%;
@@ -141,9 +131,7 @@
             transition: opacity 0.3s;
         }
 
-        .card.done .card-img {
-            opacity: 1;
-        }
+        .card.done .card-img { opacity: 1; }
 
         /* Нижняя панель */
         .bottom-bar {
@@ -173,24 +161,111 @@
             transition: opacity 0.2s;
         }
 
-        .btn:active {
-            opacity: 0.8;
+        .btn:active { opacity: 0.8; }
+        .btn-secondary { background-color: #2c2c2c; color: white; }
+        .btn-primary { background-color: var(--accent); color: black; }
+        .btn-primary:disabled { background-color: #333; color: #666; cursor: not-allowed; }
+
+        /* --- ЭКРАН КАМЕРЫ --- */
+        #camera-view {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: black;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
         }
 
-        .btn-secondary {
-            background-color: #2c2c2c;
+        #camera-view.active { display: flex; }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+        }
+
+        /* Оверлей с маской */
+        .camera-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 20px;
+            pointer-events: none; /* Пропускаем клики сквозь оверлей */
+        }
+
+        .camera-header {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Сама маска (белый контур) */
+        .mask-svg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            opacity: 0.6;
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: auto; /* Возвращаем клики для кнопок */
+            padding-bottom: 20px;
+        }
+
+        .btn-close {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
             color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
         }
 
-        .btn-primary {
-            background-color: var(--accent);
-            color: black;
+        .btn-shutter {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 4px solid white;
+            cursor: pointer;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
 
-        .btn-primary:disabled {
-            background-color: #333;
-            color: #666;
-            cursor: not-allowed;
+        .btn-shutter:active { transform: scale(0.95); }
+
+        /* Превью */
+        #preview-view {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0f0f0f;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+        #preview-view.active { display: flex; }
+        
+        #preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
     </style>
 </head>
@@ -201,17 +276,45 @@
         <div class="subtitle">Сделайте 9 фото, чтобы менеджер подтвердил состояние автомобиля.</div>
     </header>
 
-    <div class="grid" id="grid">
-        <!-- Карточки генерируются скриптом -->
-    </div>
+    <div class="grid" id="grid"></div>
 
     <div class="bottom-bar">
         <button class="btn btn-secondary" onclick="alert('Сброс макета')">Назад</button>
         <button class="btn btn-primary" id="btn-send" disabled onclick="alert('Отправка на сервер...')">Отправить</button>
     </div>
 
+    <!-- ЭКРАН КАМЕРЫ -->
+    <div id="camera-view">
+        <video id="video" autoplay playsinline muted></video>
+        
+        <div class="camera-overlay">
+            <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
+            
+            <!-- Контур машины (упрощенный) -->
+            <svg class="mask-svg" viewBox="0 0 200 100" fill="none" stroke="white" stroke-width="2">
+                <path d="M 20,80 L 20,50 C 30,50 40,30 60,20 L 140,20 C 160,30 170,50 180,50 L 180,80 C 180,90 170,90 160,90 C 150,90 140,80 140,80 L 60,80 C 60,80 50,90 40,90 C 30,90 20,90 20,80 Z" />
+                <circle cx="50" cy="85" r="12" />
+                <circle cx="150" cy="85" r="12" />
+            </svg>
+
+            <div class="camera-controls">
+                <button class="btn-close" onclick="closeCamera()">✕</button>
+                <button class="btn-shutter" onclick="capturePhoto()"></button>
+                <div style="width: 50px;"></div> <!-- Пустой блок для центровки кнопки -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ЭКРАН ПРЕВЬЮ -->
+    <div id="preview-view">
+        <img id="preview-img" src="">
+        <div class="bottom-bar" style="background: black; border-top: none;">
+            <button class="btn btn-secondary" onclick="retakePhoto()">Переснять</button>
+            <button class="btn btn-primary" onclick="confirmPhoto()">ОК</button>
+        </div>
+    </div>
+
     <script>
-        // Список наших 9 ракурсов
         const angles = [
             { id: 'front', label: 'Спереди' },
             { id: 'back', label: 'Сзади' },
@@ -226,9 +329,17 @@
 
         const grid = document.getElementById('grid');
         const btnSend = document.getElementById('btn-send');
+        const video = document.getElementById('video');
+        const cameraView = document.getElementById('camera-view');
+        const previewView = document.getElementById('preview-view');
+        const previewImg = document.getElementById('preview-img');
+        const cameraTitle = document.getElementById('camera-title');
+        
         let doneCount = 0;
+        let currentAngleId = null;
+        let stream = null;
+        let capturedBase64 = null;
 
-        // SVG иконка камеры
         const cameraSvg = `<svg class="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
 
         // Отрисовка карточек
@@ -236,43 +347,115 @@
             const card = document.createElement('div');
             card.className = 'card';
             card.id = `card-${angle.id}`;
-            
-            // Заглушка картинки (пока не нажата)
             card.innerHTML = `
                 ${cameraSvg}
                 <div class="card-label">${angle.label}</div>
             `;
 
-            // Клик по карточке (эмуляция фото)
             card.addEventListener('click', () => {
-                if (!card.classList.contains('done')) {
-                    // Ставим рандомную картинку с интернета для демо
-                    const img = document.createElement('img');
-                    img.src = `https://picsum.photos/seed/${angle.id}/400/300`;
-                    img.className = 'card-img';
-                    card.appendChild(img);
-                    
-                    setTimeout(() => {
-                        card.classList.add('done');
-                        doneCount++;
-                        updateProgress();
-                    }, 100);
-                } else {
-                    // Если уже сфоткано - можно переснять
+                if (card.classList.contains('done')) {
                     if(confirm('Переснять этот ракурс?')) {
                         card.classList.remove('done');
                         const img = card.querySelector('.card-img');
                         if(img) img.remove();
                         doneCount--;
                         updateProgress();
+                        openCamera(angle.id, angle.label);
                     }
+                } else {
+                    openCamera(angle.id, angle.label);
                 }
             });
 
             grid.appendChild(card);
         });
 
-        // Обновление прогресса и кнопки
+        // --- ЛОГИКА КАМЕРЫ ---
+        async function openCamera(id, label) {
+            currentAngleId = id;
+            cameraTitle.innerText = label;
+            cameraView.classList.add('active');
+            
+            try {
+                // Запрашиваем заднюю камеру
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert('Ошибка доступа к камере: ' + err.message);
+                closeCamera();
+            }
+        }
+
+        function closeCamera() {
+            cameraView.classList.remove('active');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        function capturePhoto() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // Сжимаем фото до 1600px по большей стороне
+            const MAX_SIZE = 1600;
+            let width = video.videoWidth;
+            let height = video.videoHeight;
+
+            if (width > height && width > MAX_SIZE) {
+                height = Math.round(height * (MAX_SIZE / width));
+                width = MAX_SIZE;
+            } else if (height > MAX_SIZE) {
+                width = Math.round(width * (MAX_SIZE / height));
+                height = MAX_SIZE;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Рисуем кадр с видео на канвас
+            context.drawImage(video, 0, 0, width, height);
+            
+            // Получаем Base64 с качеством 0.8 (JPEG)
+            capturedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Останавливаем камеру и показываем превью
+            closeCamera();
+            previewImg.src = capturedBase64;
+            previewView.classList.add('active');
+        }
+
+        function retakePhoto() {
+            previewView.classList.remove('active');
+            capturedBase64 = null;
+            // Возвращаемся к камере
+            const angle = angles.find(a => a.id === currentAngleId);
+            openCamera(currentAngleId, angle.label);
+        }
+
+        function confirmPhoto() {
+            previewView.classList.remove('active');
+            
+            const card = document.getElementById(`card-${currentAngleId}`);
+            let img = card.querySelector('.card-img');
+            if (!img) {
+                img = document.createElement('img');
+                img.className = 'card-img';
+                card.appendChild(img);
+            }
+            img.src = capturedBase64;
+            
+            card.classList.add('done');
+            doneCount++;
+            updateProgress();
+            
+            capturedBase64 = null;
+            currentAngleId = null;
+        }
+
         function updateProgress() {
             if (doneCount === angles.length) {
                 btnSend.disabled = false;
