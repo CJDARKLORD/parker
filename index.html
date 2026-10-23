@@ -35,7 +35,13 @@
         #camera-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 1000; display: none; flex-direction: column; }
         #camera-view.active { display: flex; }
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
-        .camera-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
+        
+        .camera-overlay { 
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+            z-index: 2; pointer-events: none; 
+            isolation: isolate; /* ВАЖНО: Помогает Safari правильно накладывать слои */
+        }
+        
         .camera-header { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%; }
 
         /* МАСКА */
@@ -45,6 +51,7 @@
             width: 95%; max-width: 800px; height: auto;
             object-fit: contain;
             mix-blend-mode: screen; /* Убирает черный фон! */
+            filter: contrast(3) brightness(1.5); /* ВЫКРУЧИВАЕТ ТЕМНО-СЕРЫЙ В АБСОЛЮТНО ЧЕРНЫЙ */
             opacity: 0.85;
             display: none; pointer-events: none;
         }
@@ -250,13 +257,11 @@
             } else if (id === 'left') {
                 cameraMask.src = 'mask-side.png';
                 cameraMask.classList.add('active');
-                // Левая сторона — картинка смотрит влево (как есть)
             } else if (id === 'right') {
                 cameraMask.src = 'mask-side.png';
                 cameraMask.classList.add('active');
-                cameraMask.classList.add('flipped'); // Правая сторона — отзеркаливаем
+                cameraMask.classList.add('flipped'); // Отзеркаливаем для правой стороны
             } 
-            // Для салона, пробега и масла маски нет
 
             try {
                 if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
