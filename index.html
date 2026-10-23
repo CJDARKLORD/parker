@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Фотоконтроль авто</title>
     <style>
-        /* ... (Все базовые стили оставляем как были) ... */
         :root { --bg-color: #0f0f0f; --card-bg: #1e1e1e; --text-main: #ffffff; --text-muted: #888888; --accent: #ffd600; --success: #4caf50; --border-radius: 12px; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
@@ -13,6 +12,7 @@
         h1 { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
         .subtitle { color: var(--text-muted); font-size: 15px; line-height: 1.4; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 20px; }
+        
         .card { background-color: var(--card-bg); border-radius: var(--border-radius); overflow: hidden; position: relative; aspect-ratio: 4 / 3; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s; border: 1px solid transparent; }
         .card:active { transform: scale(0.97); }
         .card.done { border-color: var(--success); }
@@ -23,6 +23,7 @@
         .icon-camera { width: 32px; height: 32px; opacity: 0.3; margin-bottom: 15px; }
         .card-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.3s; }
         .card.done .card-img { opacity: 1; }
+        
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-color); padding: 16px 20px; display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; }
         .btn { flex: 1; height: 56px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: opacity 0.2s; }
         .btn:active { opacity: 0.8; }
@@ -30,23 +31,29 @@
         .btn-primary { background-color: var(--accent); color: black; }
         .btn-primary:disabled { background-color: #333; color: #666; cursor: not-allowed; }
 
+        /* --- ЭКРАН КАМЕРЫ --- */
         #camera-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 1000; display: none; flex-direction: column; }
         #camera-view.active { display: flex; }
         video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
         .camera-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
         .camera-header { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%; }
 
-        /* СТИЛИ ДЛЯ МАСОК */
-        .mask-container {
+        /* МАСКА */
+        #camera-mask {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%; max-width: 500px; height: auto;
-            opacity: 0.8;
-            display: none;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); /* Легкое свечение */
+            width: 95%; max-width: 800px; height: auto;
+            object-fit: contain;
+            mix-blend-mode: screen; /* Убирает черный фон! */
+            opacity: 0.85;
+            display: none; pointer-events: none;
         }
-        .mask-container.active { display: block; }
-        .mask-container svg { width: 100%; height: 100%; }
+        #camera-mask.active { display: block; }
+        
+        /* Класс для отзеркаливания */
+        #camera-mask.flipped {
+            transform: translate(-50%, -50%) scaleX(-1);
+        }
 
         .btn-close { position: absolute; top: 40px; left: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; z-index: 10; }
         .btn-shutter { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; background: var(--accent); border: 4px solid white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 10; transition: transform 0.1s; }
@@ -63,14 +70,14 @@
             .btn-close { top: 50%; transform: translateY(-50%); left: 20px; }
             .btn-shutter { top: 50%; right: 30px; left: auto; bottom: auto; transform: translateY(-50%); }
             .btn-shutter:active { transform: translateY(-50%) scale(0.92); }
-            .mask-container { width: 75%; max-width: 650px; }
+            #camera-mask { width: 90%; max-width: 900px; }
         }
 
         #preview-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f0f; z-index: 1000; display: none; flex-direction: column; }
         #preview-view.active { display: flex; }
         #preview-img { width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s; }
 
-        /* Стили для инструкции оставляем без изменений */
+        /* --- ЭКРАН ИНСТРУКЦИИ --- */
         #browser-instruction { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-color); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px 20px; text-align: center; }
         #browser-instruction.active { display: flex; }
         .instruction-icon { font-size: 60px; margin-bottom: 20px; }
@@ -125,44 +132,7 @@
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
-            <!-- МАСКА: РЕАЛИСТИЧНЫЙ ВИД СБОКУ -->
-            <div class="mask-container" id="mask-side">
-                <!-- Профессиональный детализированный силуэт седана -->
-                <svg viewBox="0 0 512 192" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M 450.4 139.7 C 463.3 136.4 481.1 123.1 495.4 101.3 C 503.7 85.9 507.6 77.3 511 62.7 C 509.2 57.4 501.3 51.8 490.4 48.1 C 473.6 43.7 464.8 44.8 454.6 45.8 L 388.5 49.6 C 373.1 45.7 362.2 33.8 346.6 22.9 C 334.4 14.4 315.3 8.8 287.8 6 C 248.6 2.9 212.3 3.4 177.2 13 C 153.4 23.1 133.3 36.4 108.8 49 C 83.2 55.5 42.6 59.5 23 68.2 C 10.1 74.6 2 83.5 0 98.8 C 0 112.2 3.9 125.8 14.8 135 C 22.4 141 37.5 144 51.5 145.2 C 59.6 156.5 75.4 167.7 92.4 167.9 C 118.8 168.2 128.3 146.9 137.3 144.3 L 324.6 145.6 C 337.4 153.4 352.5 161.8 370.2 161.7 C 397.1 161.5 403.2 145 413.9 141.6 L 450.4 139.7 Z" />
-                    <!-- Линии дверей, ручек и деталей -->
-                    <path d="M 177.2 13 L 177.2 96 M 287.8 6 L 287.8 112 M 108.8 49 L 454.6 45.8 M 137.3 144.3 L 137.3 98 M 324.6 145.6 L 324.6 112 M 51.5 145.2 L 51.5 70 M 413.9 141.6 L 413.9 82" stroke-width="1" opacity="0.6"/>
-                    <path d="M 177.2 75 L 205 75 M 287.8 75 L 315 75 M 335 90 L 350 90 M 150 90 L 165 90" stroke-width="3" />
-                    <!-- Колёса -->
-                    <circle cx="92.4" cy="145.8" r="39.4" stroke-width="2.5" />
-                    <circle cx="92.4" cy="145.8" r="22.5" stroke-width="1.5" stroke-dasharray="3 3" />
-                    <circle cx="370.2" cy="145.8" r="39.4" stroke-width="2.5" />
-                    <circle cx="370.2" cy="145.8" r="22.5" stroke-width="1.5" stroke-dasharray="3 3" />
-                    <!-- Фары -->
-                    <path d="M 2 98.8 L 18 96 M 495.4 101.3 L 511 98" stroke-width="3" />
-                </svg>
-            </div>
-
-            <!-- МАСКА: РЕАЛИСТИЧНЫЙ ВИД СПЕРЕДИ -->
-            <div class="mask-container" id="mask-front">
-                <svg viewBox="0 0 256 256" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M 54.4 197.6 L 38.3 197.6 C 23.2 197.6 15.9 186.2 15.9 169.8 L 15.9 129.8 C 15.9 116.5 25 108.6 38.3 105.3 L 67.9 98.8 C 86.7 71.8 118.5 49.6 156.8 49.6 C 188.8 49.6 214.8 65.2 227.5 85.1 L 236.1 103.2 L 242.7 105.3 C 250.3 107.2 256 115.7 256 125.3 L 256 169.8 C 256 186.2 248.7 197.6 233.6 197.6 L 215.3 197.6" />
-                    <!-- Лобовое стекло и крыша -->
-                    <path d="M 67.9 98.8 L 87.6 72.2 C 102.8 54.7 124.6 45.1 152.5 45.1 C 182.4 45.1 204.6 55.9 219.4 72.2 L 227.5 85.1" />
-                    <!-- Капот и решетка радиатора -->
-                    <path d="M 54.4 127.4 L 201.6 127.4 M 63.9 145.8 L 192.1 145.8" stroke-width="1.5" />
-                    <path d="M 114.4 127.4 L 114.4 145.8 M 141.6 127.4 L 141.6 145.8" stroke-width="1.5" />
-                    <!-- Бампер -->
-                    <path d="M 36.9 169.8 L 219.1 169.8" />
-                    <!-- Фары -->
-                    <path d="M 24 111.2 L 50 116.5 M 232 111.2 L 206 116.5" stroke-width="4" />
-                    <!-- Противотуманки -->
-                    <circle cx="51.6" cy="179.4" r="6" />
-                    <circle cx="204.4" cy="179.4" r="6" />
-                    <!-- Колёса (видимые части) -->
-                    <path d="M 54.4 197.6 C 54.4 215.8 43.1 226.8 25.8 226.8 C 15.6 226.8 15.9 215.8 15.9 204.2 M 201.6 197.6 C 201.6 215.8 212.9 226.8 230.2 226.8 C 240.4 226.8 240.1 215.8 240.1 204.2" stroke-width="3" />
-                </svg>
-            </div>
+            <img id="camera-mask" src="" alt="Mask Overlay">
 
             <button class="btn-close" onclick="closeCamera()">✕</button>
             <button class="btn-shutter" onclick="capturePhoto()">
@@ -180,7 +150,6 @@
     </div>
 
     <script>
-        // ... (Функция checkBrowser и инициализация карточек остаются без изменений) ...
         function checkBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -191,7 +160,6 @@
             const isInstagram = /Instagram/i.test(ua);
             const isWebView = /wv/.test(ua) || (!/Safari/.test(ua) && isIOS);
             const isMessenger = isTelegram || isWhatsApp || isVK || isInstagram || isWebView;
-
             if (isMessenger) {
                 document.getElementById('browser-instruction').classList.add('active');
                 if (isIOS) document.getElementById('ios-instruction').style.display = 'block';
@@ -230,6 +198,7 @@
         const previewView = document.getElementById('preview-view');
         const previewImg = document.getElementById('preview-img');
         const cameraTitle = document.getElementById('camera-title');
+        const cameraMask = document.getElementById('camera-mask');
         
         let doneCount = 0;
         let currentAngleId = null;
@@ -265,16 +234,29 @@
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
 
-            const maskSide = document.getElementById('mask-side');
-            const maskFront = document.getElementById('mask-front');
-            maskSide.classList.remove('active');
-            maskFront.classList.remove('active');
-
-            if (['left', 'right', 'back'].includes(id)) {
-                maskSide.classList.add('active');
-            } else if (['front'].includes(id)) {
-                maskFront.classList.add('active');
-            }
+            // ЛОГИКА ПОДСТАНОВКИ КАРТИНОК
+            cameraMask.classList.remove('active');
+            cameraMask.classList.remove('flipped');
+            
+            if (id === 'front') {
+                cameraMask.src = 'mask-front.png';
+                cameraMask.classList.add('active');
+            } else if (id === 'back') {
+                cameraMask.src = 'mask-back.png';
+                cameraMask.classList.add('active');
+            } else if (id === 'trunk') {
+                cameraMask.src = 'mask-trunk.png'; 
+                cameraMask.classList.add('active');
+            } else if (id === 'left') {
+                cameraMask.src = 'mask-side.png';
+                cameraMask.classList.add('active');
+                // Левая сторона — картинка смотрит влево (как есть)
+            } else if (id === 'right') {
+                cameraMask.src = 'mask-side.png';
+                cameraMask.classList.add('active');
+                cameraMask.classList.add('flipped'); // Правая сторона — отзеркаливаем
+            } 
+            // Для салона, пробега и масла маски нет
 
             try {
                 if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
@@ -290,7 +272,6 @@
             }
         }
 
-        // ... (Остальной JS код capturePhoto, closeCamera и т.д. остается без изменений) ...
         function closeCamera() {
             cameraView.classList.remove('active');
             if (stream) {
