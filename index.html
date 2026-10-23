@@ -4,14 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Фотоконтроль авто</title>
-    
-    <!-- Подключаем библиотеку масок -->
-    <script type="module">
-        import 'https://esm.sh/easyinspection-mask@0.0.6';
-    </script>
-
     <style>
-        /* ... (все стили остаются прежними, без изменений) ... */
         :root {
             --bg-color: #0f0f0f;
             --card-bg: #1e1e1e;
@@ -117,9 +110,9 @@
         }
         #camera-view.active { display: flex; }
 
-        /* Стили для видео внутри svg-mask */
-        #camera-view video {
-            width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
+        video {
+            width: 100%; height: 100%; object-fit: cover;
+            position: absolute; top: 0; left: 0; z-index: 1;
         }
 
         .camera-overlay {
@@ -133,8 +126,17 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%;
         }
 
-        /* Убираем старый mask-svg, так как теперь используется компонент svg-mask */
-        /* .mask-svg { ... } */
+        /* Обновлённый, детализированный контур автомобиля */
+        .mask-svg {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 500px;
+            height: auto;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+        }
 
         .btn-close {
             position: absolute; top: 40px; left: 20px; width: 44px; height: 44px;
@@ -168,6 +170,7 @@
             .btn-close { top: 50%; transform: translateY(-50%); left: 20px; }
             .btn-shutter { top: 50%; right: 30px; left: auto; bottom: auto; transform: translateY(-50%); }
             .btn-shutter:active { transform: translateY(-50%) scale(0.92); }
+            .mask-svg { width: 70%; }
         }
 
         #preview-view {
@@ -230,11 +233,9 @@
         <button class="btn btn-primary" id="btn-send" disabled onclick="alert('Отправка на сервер...')">Отправить</button>
     </div>
 
-    <!-- ЭКРАН КАМЕРЫ с компонентом svg-mask -->
+    <!-- ЭКРАН КАМЕРЫ -->
     <div id="camera-view">
-        <svg-mask id="camera-mask" mask-name="small-vehicle-front" width="80%">
-            <video id="video" autoplay playsinline muted></video>
-        </svg-mask>
+        <video id="video" autoplay playsinline muted></video>
         
         <div class="rotate-hint">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -248,6 +249,27 @@
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
+            <!-- УЛУЧШЕННЫЙ, ДЕТАЛИЗИРОВАННЫЙ КОНТУР -->
+            <svg class="mask-svg" viewBox="0 0 400 180" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Основной кузов -->
+                <path d="M 30 130 L 20 130 C 10 130 5 120 5 110 L 5 80 C 5 60 15 50 45 45 L 110 35 C 140 15 180 10 230 15 C 280 20 320 40 340 70 L 360 75 C 375 80 380 90 380 105 L 380 120 C 380 125 375 130 365 130 L 350 130" />
+                <!-- Линии дверей -->
+                <path d="M 150 45 L 150 130" />
+                <path d="M 230 20 L 230 130" />
+                <!-- Окна -->
+                <path d="M 120 40 L 150 20 L 200 20 L 200 40 Z" />
+                <path d="M 210 40 L 210 20 L 250 25 L 290 40 Z" />
+                <!-- Фары и задние фонари -->
+                <path d="M 10 85 L 30 85" />
+                <path d="M 370 85 L 390 85" />
+                <!-- Колёса -->
+                <circle cx="100" cy="130" r="35" />
+                <circle cx="280" cy="130" r="35" />
+                <!-- Детали колёс -->
+                <circle cx="100" cy="130" r="20" />
+                <circle cx="280" cy="130" r="20" />
+            </svg>
+
             <button class="btn-close" onclick="closeCamera()">✕</button>
             
             <button class="btn-shutter" onclick="capturePhoto()">
@@ -268,8 +290,6 @@
     </div>
 
     <script>
-        // ... (скрипт остается практически таким же, меняется только функция openCamera) ...
-        
         function checkBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -321,7 +341,6 @@
         const previewView = document.getElementById('preview-view');
         const previewImg = document.getElementById('preview-img');
         const cameraTitle = document.getElementById('camera-title');
-        const cameraMask = document.getElementById('camera-mask'); // Новый элемент
         
         let doneCount = 0;
         let currentAngleId = null;
@@ -357,29 +376,6 @@
             currentAngleId = id;
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
-
-            // *** НОВОЕ: Устанавливаем маску в зависимости от ракурса ***
-            switch(id) {
-                case 'front':
-                    cameraMask.setAttribute('mask-name', 'small-vehicle-front');
-                    break;
-                case 'left':
-                    cameraMask.setAttribute('mask-name', 'small-vehicle-side-left');
-                    break;
-                case 'right':
-                    cameraMask.setAttribute('mask-name', 'small-vehicle-side-right');
-                    break;
-                case 'mileage':
-                    cameraMask.setAttribute('mask-name', 'odometer');
-                    break;
-                case 'oil':
-                    cameraMask.setAttribute('mask-name', 'chassi-motor');
-                    break;
-                default:
-                    // Для остальных ракурсов (багажник, салон) можно оставить дефолтную маску или убрать атрибут
-                    cameraMask.setAttribute('mask-name', ''); // или скрыть маску
-                    break;
-            }
             
             try {
                 if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
