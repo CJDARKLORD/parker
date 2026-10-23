@@ -386,7 +386,7 @@
 
             try {
                 // СЮДА ВСТАВЛЕНА ССЫЛКА ИЗ CLOUDFLARE
-                let url = format!("https://twilight-unit-df6e.cjdarklord.workers.dev/bot{}/sendMediaGroup", state.bot_token);
+                const response = await fetch('https://exwfl-159-253-175-152.free.pinggy.net/api/upload', {
                     method: 'POST',
                     body: formData
                 });
