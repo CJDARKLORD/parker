@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Фотоконтроль авто</title>
     <style>
+        /* ... (все стили из предыдущего сообщения оставляем без изменений) ... */
         :root {
             --bg-color: #0f0f0f;
             --card-bg: #1e1e1e;
@@ -14,153 +15,52 @@
             --success: #4caf50;
             --border-radius: 12px;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding-bottom: 110px;
-            overflow-x: hidden;
-        }
-
-        header {
-            padding: 24px 20px 16px;
-            position: sticky;
-            top: 0;
-            background-color: var(--bg-color);
-            z-index: 10;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
+        header { padding: 24px 20px 16px; position: sticky; top: 0; background-color: var(--bg-color); z-index: 10; }
         h1 { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
         .subtitle { color: var(--text-muted); font-size: 15px; line-height: 1.4; }
-
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 20px; }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            position: relative;
-            aspect-ratio: 4 / 3;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.1s;
-            border: 1px solid transparent;
-        }
-
+        .card { background-color: var(--card-bg); border-radius: var(--border-radius); overflow: hidden; position: relative; aspect-ratio: 4 / 3; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.1s; border: 1px solid transparent; }
         .card:active { transform: scale(0.97); }
         .card.done { border-color: var(--success); }
-        .card.done::after {
-            content: '✓';
-            position: absolute;
-            top: 8px; right: 8px;
-            background: var(--success); color: white;
-            width: 24px; height: 24px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: bold; font-size: 14px; z-index: 2;
-        }
+        .card.done::after { content: '✓'; position: absolute; top: 8px; right: 8px; background: var(--success); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; z-index: 2; }
         .card.done .card-label { color: var(--text-muted); }
         .card.done .icon-camera { opacity: 0.1; }
-
-        .card-label {
-            position: absolute; bottom: 10px; left: 10px; right: 10px;
-            text-align: center; font-size: 14px; font-weight: 500;
-            z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none;
-        }
-
+        .card-label { position: absolute; bottom: 10px; left: 10px; right: 10px; text-align: center; font-size: 14px; font-weight: 500; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
         .icon-camera { width: 32px; height: 32px; opacity: 0.3; margin-bottom: 15px; }
-
-        .card-img {
-            width: 100%; height: 100%; object-fit: cover;
-            position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.3s;
-        }
+        .card-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.3s; }
         .card.done .card-img { opacity: 1; }
-
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background-color: var(--bg-color); padding: 16px 20px;
-            display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05);
-            z-index: 100;
-        }
-
-        .btn {
-            flex: 1; height: 56px; border-radius: 12px; border: none;
-            font-size: 16px; font-weight: 600; cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-            transition: opacity 0.2s;
-        }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background-color: var(--bg-color); padding: 16px 20px; display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; }
+        .btn { flex: 1; height: 56px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: opacity 0.2s; }
         .btn:active { opacity: 0.8; }
         .btn-secondary { background-color: #2c2c2c; color: white; }
         .btn-primary { background-color: var(--accent); color: black; }
         .btn-primary:disabled { background-color: #333; color: #666; cursor: not-allowed; }
 
-        #camera-view {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: black; z-index: 1000; display: none; flex-direction: column;
-        }
+        #camera-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: black; z-index: 1000; display: none; flex-direction: column; }
         #camera-view.active { display: flex; }
+        video { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; }
+        .camera-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
+        .camera-header { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%; }
 
-        video {
-            width: 100%; height: 100%; object-fit: cover;
-            position: absolute; top: 0; left: 0; z-index: 1;
-        }
-
-        .camera-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 2; pointer-events: none;
-        }
-
-        .camera-header {
-            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
-            text-align: center; font-size: 18px; font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%;
-        }
-
-        /* Обновлённый, детализированный контур автомобиля */
-        .mask-svg {
-            position: absolute;
-            top: 50%; left: 50%;
+        /* СТИЛИ ДЛЯ МАСОК */
+        .mask-container {
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 85%;
-            max-width: 500px;
-            height: auto;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
+            width: 90%; max-width: 500px; height: auto;
+            opacity: 0.7;
+            display: none; /* По умолчанию скрыты */
         }
+        .mask-container.active { display: block; }
+        .mask-container svg { width: 100%; height: 100%; filter: drop-shadow(0 0 5px rgba(255,255,255,0.4)); }
 
-        .btn-close {
-            position: absolute; top: 40px; left: 20px; width: 44px; height: 44px;
-            border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
-            color: white; font-size: 20px; display: flex; justify-content: center; align-items: center;
-            cursor: pointer; pointer-events: auto; z-index: 10;
-        }
-
-        .btn-shutter {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            width: 76px; height: 76px; border-radius: 50%; background: var(--accent);
-            border: 4px solid white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: flex; justify-content: center; align-items: center;
-            pointer-events: auto; z-index: 10; transition: transform 0.1s;
-        }
+        .btn-close { position: absolute; top: 40px; left: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; z-index: 10; }
+        .btn-shutter { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; background: var(--accent); border: 4px solid white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 10; transition: transform 0.1s; }
         .btn-shutter:active { transform: translateX(-50%) scale(0.92); }
         .btn-shutter svg { width: 32px; height: 32px; fill: none; stroke: black; stroke-width: 2; }
 
-        .rotate-hint {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85); z-index: 50;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; text-align: center; padding: 20px; pointer-events: none;
-        }
+        .rotate-hint { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; pointer-events: none; }
         .rotate-hint svg { width: 80px; height: 80px; margin-bottom: 20px; animation: rotatePhone 2s ease-in-out infinite; }
         @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(-90deg); } }
 
@@ -170,41 +70,26 @@
             .btn-close { top: 50%; transform: translateY(-50%); left: 20px; }
             .btn-shutter { top: 50%; right: 30px; left: auto; bottom: auto; transform: translateY(-50%); }
             .btn-shutter:active { transform: translateY(-50%) scale(0.92); }
-            .mask-svg { width: 70%; }
+            .mask-container { width: 70%; max-width: 600px; }
         }
 
-        #preview-view {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: #0f0f0f; z-index: 1000; display: none; flex-direction: column;
-        }
+        #preview-view { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f0f; z-index: 1000; display: none; flex-direction: column; }
         #preview-view.active { display: flex; }
         #preview-img { width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s; }
 
-        #browser-instruction {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg-color); z-index: 9999; display: none;
-            flex-direction: column; justify-content: center; align-items: center;
-            padding: 30px 20px; text-align: center;
-        }
+        #browser-instruction { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-color); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px 20px; text-align: center; }
         #browser-instruction.active { display: flex; }
         .instruction-icon { font-size: 60px; margin-bottom: 20px; }
         .instruction-title { font-size: 24px; font-weight: bold; margin-bottom: 12px; line-height: 1.3; }
         .instruction-text { font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.5; }
         .instruction-arrow { font-size: 40px; color: var(--accent); margin: 20px 0; animation: bounce 1s infinite alternate; }
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(10px); } }
-        .instruction-btn {
-            background: var(--accent); color: black; border: none; padding: 16px 32px;
-            font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
-            width: 100%; max-width: 300px;
-        }
-        .instruction-skip {
-            margin-top: 20px; color: var(--text-muted); font-size: 14px;
-            text-decoration: underline; cursor: pointer; background: none; border: none;
-        }
+        .instruction-btn { background: var(--accent); color: black; border: none; padding: 16px 32px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; width: 100%; max-width: 300px; }
+        .instruction-skip { margin-top: 20px; color: var(--text-muted); font-size: 14px; text-decoration: underline; cursor: pointer; background: none; border: none; }
     </style>
 </head>
 <body>
-
+    <!-- ... (Блок browser-instruction и header без изменений) ... -->
     <div id="browser-instruction">
         <div class="instruction-icon">📱</div>
         <div class="instruction-title">Откройте ссылку<br>в браузере</div>
@@ -238,10 +123,7 @@
         <video id="video" autoplay playsinline muted></video>
         
         <div class="rotate-hint">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-            </svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
             <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">Поверните телефон</div>
             <div style="color: #aaa;">Для удобной съёмки машины<br>используйте горизонтальное положение</div>
         </div>
@@ -249,34 +131,49 @@
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
-            <!-- УЛУЧШЕННЫЙ, ДЕТАЛИЗИРОВАННЫЙ КОНТУР -->
-            <svg class="mask-svg" viewBox="0 0 400 180" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <!-- Основной кузов -->
-                <path d="M 30 130 L 20 130 C 10 130 5 120 5 110 L 5 80 C 5 60 15 50 45 45 L 110 35 C 140 15 180 10 230 15 C 280 20 320 40 340 70 L 360 75 C 375 80 380 90 380 105 L 380 120 C 380 125 375 130 365 130 L 350 130" />
-                <!-- Линии дверей -->
-                <path d="M 150 45 L 150 130" />
-                <path d="M 230 20 L 230 130" />
-                <!-- Окна -->
-                <path d="M 120 40 L 150 20 L 200 20 L 200 40 Z" />
-                <path d="M 210 40 L 210 20 L 250 25 L 290 40 Z" />
-                <!-- Фары и задние фонари -->
-                <path d="M 10 85 L 30 85" />
-                <path d="M 370 85 L 390 85" />
-                <!-- Колёса -->
-                <circle cx="100" cy="130" r="35" />
-                <circle cx="280" cy="130" r="35" />
-                <!-- Детали колёс -->
-                <circle cx="100" cy="130" r="20" />
-                <circle cx="280" cy="130" r="20" />
-            </svg>
+            <!-- МАСКА 1: ВИД СБОКУ (Абстрактный блюпринт) -->
+            <div class="mask-container" id="mask-side">
+                <svg viewBox="0 0 500 200" fill="none" stroke="white" stroke-width="2">
+                    <!-- Основной контур кузова -->
+                    <path d="M 40 140 L 20 140 C 10 140 5 130 5 120 L 5 90 C 5 70 20 60 60 55 L 120 40 C 150 15 200 10 260 15 C 320 20 380 45 410 80 L 440 85 C 470 90 480 105 480 125 L 480 135 C 480 140 470 140 460 140 L 430 140" stroke-width="3" />
+                    <!-- Технические линии и детали (абстрактные) -->
+                    <path d="M 130 50 L 190 50 L 210 15 M 190 50 L 190 140 M 280 20 L 280 140 M 350 35 L 350 140" stroke-width="1" stroke-dasharray="4 4" />
+                    <path d="M 50 100 L 80 100 M 430 100 L 460 100" stroke-width="2" />
+                    <!-- Окна -->
+                    <path d="M 140 45 L 180 25 L 250 25 L 250 45 Z" stroke-width="2" />
+                    <path d="M 270 45 L 270 25 L 330 35 L 380 45 Z" stroke-width="2" />
+                    <!-- Колёса -->
+                    <circle cx="120" cy="140" r="40" stroke-width="3" />
+                    <circle cx="120" cy="140" r="25" stroke-width="1" stroke-dasharray="2 2" />
+                    <circle cx="360" cy="140" r="40" stroke-width="3" />
+                    <circle cx="360" cy="140" r="25" stroke-width="1" stroke-dasharray="2 2" />
+                    <!-- Абстрактные маркеры -->
+                    <circle cx="50" cy="120" r="3" fill="white" />
+                    <circle cx="450" cy="120" r="3" fill="white" />
+                </svg>
+            </div>
+
+            <!-- МАСКА 2: ВИД СПЕРЕДИ -->
+            <div class="mask-container" id="mask-front">
+                <svg viewBox="0 0 300 250" fill="none" stroke="white" stroke-width="2">
+                    <!-- Основной контур -->
+                    <path d="M 80 200 L 50 200 C 40 200 30 190 30 170 L 30 100 C 30 80 50 70 70 65 L 100 40 C 120 20 180 20 200 40 L 230 65 C 250 70 270 80 270 100 L 270 170 C 270 190 260 200 250 200 L 220 200" stroke-width="3" />
+                    <!-- Лобовое стекло -->
+                    <path d="M 80 65 L 100 40 L 200 40 L 220 65 Z" stroke-width="2" />
+                    <!-- Бампер и решетка -->
+                    <path d="M 70 160 L 230 160 M 80 180 L 220 180" stroke-width="2" />
+                    <!-- Фары -->
+                    <path d="M 40 120 L 70 120 M 260 120 L 230 120" stroke-width="4" />
+                    <!-- Колёса (видно спереди) -->
+                    <path d="M 40 200 L 40 230 M 260 200 L 260 230" stroke-width="4" />
+                    <!-- Ось симметрии -->
+                    <path d="M 150 20 L 150 230" stroke-width="1" stroke-dasharray="5 5" />
+                </svg>
+            </div>
 
             <button class="btn-close" onclick="closeCamera()">✕</button>
-            
             <button class="btn-shutter" onclick="capturePhoto()">
-                <svg viewBox="0 0 24 24">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                </svg>
+                <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
             </button>
         </div>
     </div>
@@ -290,6 +187,7 @@
     </div>
 
     <script>
+        // ... (Код проверки браузера и рендера карточек без изменений) ...
         function checkBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -305,7 +203,6 @@
                 document.getElementById('browser-instruction').classList.add('active');
                 if (isIOS) document.getElementById('ios-instruction').style.display = 'block';
                 else document.getElementById('android-instruction').style.display = 'block';
-
                 document.getElementById('btn-open-browser').addEventListener('click', () => {
                     if (isIOS) window.location.href = 'com-apple-mobilesafari-tab:' + window.location.href;
                     else if (isAndroid) {
@@ -319,7 +216,6 @@
         document.getElementById('btn-skip-instruction').addEventListener('click', () => {
             document.getElementById('browser-instruction').classList.remove('active');
         });
-
         window.addEventListener('load', checkBrowser);
 
         const angles = [
@@ -354,7 +250,6 @@
             card.className = 'card';
             card.id = `card-${angle.id}`;
             card.innerHTML = `${cameraSvg}<div class="card-label">${angle.label}</div>`;
-
             card.addEventListener('click', () => {
                 if (card.classList.contains('done')) {
                     if(confirm('Переснять этот ракурс?')) {
@@ -376,7 +271,23 @@
             currentAngleId = id;
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
+
+            // *** ЛОГИКА ПЕРЕКЛЮЧЕНИЯ МАСОК ***
+            const maskSide = document.getElementById('mask-side');
+            const maskFront = document.getElementById('mask-front');
             
+            // Прячем все маски
+            maskSide.classList.remove('active');
+            maskFront.classList.remove('active');
+
+            // Показываем нужную
+            if (['left', 'right', 'back'].includes(id)) {
+                maskSide.classList.add('active');
+            } else if (['front'].includes(id)) {
+                maskFront.classList.add('active');
+            }
+            // Для остальных (салон, пробег, багажник) масок пока нет
+
             try {
                 if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
             } catch (e) {}
@@ -390,7 +301,8 @@
                 closeCamera();
             }
         }
-
+        
+        // ... (Остальной код capturePhoto, closeCamera, togglePreviewFit, retakePhoto, confirmPhoto, updateProgress без изменений) ...
         function closeCamera() {
             cameraView.classList.remove('active');
             if (stream) {
@@ -430,7 +342,6 @@
             } else if (finalHeight > MAX_SIZE) {
                 finalWidth = Math.round(finalWidth * (MAX_SIZE / finalHeight)); finalHeight = MAX_SIZE;
             }
-
             const finalCanvas = document.createElement('canvas');
             finalCanvas.width = finalWidth; finalCanvas.height = finalHeight;
             const finalCtx = finalCanvas.getContext('2d');
@@ -443,10 +354,8 @@
             previewView.classList.add('active');
         }
 
-        function togglePreviewFit(img) {
-            img.style.objectFit = img.style.objectFit === 'cover' ? 'contain' : 'cover';
-        }
-
+        function togglePreviewFit(img) { img.style.objectFit = img.style.objectFit === 'cover' ? 'contain' : 'cover'; }
+        
         function retakePhoto() {
             previewView.classList.remove('active');
             capturedBase64 = null;
