@@ -244,7 +244,7 @@
 
         .btn-shutter:active { transform: scale(0.95); }
 
-        /* --- ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН --- */
+        /* ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН */
         .rotate-hint {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -257,13 +257,11 @@
             color: white;
             text-align: center;
             padding: 20px;
-            pointer-events: none; /* чтобы можно было нажать крестик */
+            pointer-events: none;
         }
 
         .rotate-hint svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
+            width: 80px; height: 80px; margin-bottom: 20px;
             animation: rotatePhone 2s ease-in-out infinite;
         }
 
@@ -273,66 +271,102 @@
             100% { transform: rotate(-90deg); }
         }
 
-        /* Скрываем подсказку, если телефон уже горизонтально */
         @media (orientation: landscape) {
             .rotate-hint { display: none; }
-            
             .camera-overlay { padding: 20px; }
             .camera-header {
                 position: absolute;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 100%;
+                top: 20px; left: 50%; transform: translateX(-50%); width: 100%;
             }
             .camera-controls {
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                position: absolute;
-                right: 20px;
-                top: 50%;
-                transform: translateY(-50%);
-                height: 100%;
-                gap: 20px;
-                padding-bottom: 0;
+                flex-direction: column; align-items: center; justify-content: center;
+                position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+                height: 100%; gap: 20px; padding-bottom: 0;
             }
-            .btn-close {
-                position: absolute;
-                top: 20px;
-                left: 20px;
-            }
-            .mask-svg {
-                width: 70%;
-                max-width: 600px;
-            }
-            .btn-shutter {
-                width: 80px;
-                height: 80px;
-            }
+            .btn-close { position: absolute; top: 20px; left: 20px; }
+            .mask-svg { width: 70%; max-width: 600px; }
+            .btn-shutter { width: 80px; height: 80px; }
         }
 
         /* --- ЭКРАН ПРЕВЬЮ --- */
         #preview-view {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: #0f0f0f;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
+            background: #0f0f0f; z-index: 1000; display: none; flex-direction: column;
         }
         #preview-view.active { display: flex; }
-        
         #preview-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: object-fit 0.2s;
+            width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s;
+        }
+
+        /* --- ЭКРАН ИНСТРУКЦИИ (ДЛЯ МЕССЕНДЖЕРОВ) --- */
+        #browser-instruction {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            z-index: 9999;
+            display: none; /* По умолчанию скрыт */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        #browser-instruction.active { display: flex; }
+        
+        .instruction-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        .instruction-title {
+            font-size: 24px; font-weight: bold; margin-bottom: 12px; line-height: 1.3;
+        }
+        .instruction-text {
+            font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.5;
+        }
+        .instruction-arrow {
+            font-size: 40px; color: var(--accent); margin: 20px 0; animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(10px); }
+        }
+        .instruction-btn {
+            background: var(--accent); color: black; border: none; padding: 16px 32px;
+            font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
+            width: 100%; max-width: 300px;
+        }
+        .instruction-skip {
+            margin-top: 20px; color: var(--text-muted); font-size: 14px; text-decoration: underline;
+            cursor: pointer; background: none; border: none;
         }
     </style>
 </head>
 <body>
 
+    <!-- ЭКРАН ИНСТРУКЦИИ -->
+    <div id="browser-instruction">
+        <div class="instruction-icon">📱</div>
+        <div class="instruction-title">Откройте ссылку<br>в браузере</div>
+        <div class="instruction-text">
+            Вы открыли приложение внутри мессенджера. Из-за ограничений безопасности, <b>камера здесь не работает</b>.
+        </div>
+        
+        <div style="background: #1e1e1e; padding: 20px; border-radius: 12px; width: 100%; max-width: 300px; margin-bottom: 20px;">
+            <div style="font-size: 15px; margin-bottom: 10px;">Как открыть в Safari/Chrome:</div>
+            <div style="font-size: 14px; color: #aaa; text-align: left;">
+                <div id="ios-instruction" style="display:none;">1. Нажмите на значок <b>«AA»</b> или <b>«Стрелочки»</b> вверху.<br>2. Выберите <b>«Открыть в Safari»</b>.</div>
+                <div id="android-instruction" style="display:none;">1. Нажмите на <b>три точки</b> в углу.<br>2. Выберите <b>«Открыть в браузере»</b>.</div>
+            </div>
+        </div>
+
+        <div class="instruction-arrow">↑</div>
+
+        <button class="instruction-btn" id="btn-open-browser">Попробовать открыть</button>
+        <button class="instruction-skip" id="btn-skip-instruction">Я уже открыл в браузере</button>
+    </div>
+
+    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
     <header>
         <h1>Фотоконтроль<br>машины</h1>
         <div class="subtitle">Сделайте 9 фото, чтобы менеджер подтвердил состояние автомобиля.</div>
@@ -349,7 +383,6 @@
     <div id="camera-view">
         <video id="video" autoplay playsinline muted></video>
         
-        <!-- ПОДСКАЗКА ПОВЕРНУТЬ ТЕЛЕФОН -->
         <div class="rotate-hint">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
@@ -361,13 +394,11 @@
 
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
-            
             <svg class="mask-svg" viewBox="0 0 200 100" fill="none" stroke="white" stroke-width="2">
                 <path d="M 20,80 L 20,50 C 30,50 40,30 60,20 L 140,20 C 160,30 170,50 180,50 L 180,80 C 180,90 170,90 160,90 C 150,90 140,80 140,80 L 60,80 C 60,80 50,90 40,90 C 30,90 20,90 20,80 Z" />
                 <circle cx="50" cy="85" r="12" />
                 <circle cx="150" cy="85" r="12" />
             </svg>
-
             <div class="camera-controls">
                 <button class="btn-close" onclick="closeCamera()">✕</button>
                 <button class="btn-shutter" onclick="capturePhoto()"></button>
@@ -386,6 +417,54 @@
     </div>
 
     <script>
+        // --- ПРОВЕРКА БРАУЗЕРА ---
+        function checkBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            const isAndroid = /Android/.test(ua);
+            
+            // Определяем встроенные браузеры (Telegram, WhatsApp, VK, Instagram)
+            const isTelegram = /Telegram/i.test(ua);
+            const isWhatsApp = /WhatsApp/i.test(ua);
+            const isVK = /VK/i.test(ua);
+            const isInstagram = /Instagram/i.test(ua);
+            const isWebView = /wv/.test(ua) || (!/Safari/.test(ua) && isIOS); // WebView на Android или iOS
+            
+            const isMessenger = isTelegram || isWhatsApp || isVK || isInstagram || isWebView;
+
+            if (isMessenger) {
+                document.getElementById('browser-instruction').classList.add('active');
+                
+                // Показываем нужную инструкцию
+                if (isIOS) {
+                    document.getElementById('ios-instruction').style.display = 'block';
+                } else {
+                    document.getElementById('android-instruction').style.display = 'block';
+                }
+
+                // Кнопка "Попробовать открыть"
+                document.getElementById('btn-open-browser').addEventListener('click', () => {
+                    if (isIOS) {
+                        // Трюк для iOS: пытаемся открыть Safari
+                        window.location.href = 'com-apple-mobilesafari-tab:' + window.location.href;
+                    } else if (isAndroid) {
+                        // Трюк для Android: пытаемся открыть Chrome
+                        const url = window.location.href.replace('https://', '');
+                        window.location.href = 'intent://' + url + '#Intent;scheme=https;package=com.android.chrome;end';
+                    }
+                });
+            }
+        }
+
+        // Кнопка "Я уже открыл в браузере" (на случай ложного срабатывания)
+        document.getElementById('btn-skip-instruction').addEventListener('click', () => {
+            document.getElementById('browser-instruction').classList.remove('active');
+        });
+
+        // Запускаем проверку при загрузке
+        window.addEventListener('load', checkBrowser);
+
+        // --- ОСТАЛЬНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ---
         const angles = [
             { id: 'front', label: 'Спереди' },
             { id: 'back', label: 'Сзади' },
@@ -440,30 +519,21 @@
             grid.appendChild(card);
         });
 
-        // --- ЛОГИКА КАМЕРЫ ---
         async function openCamera(id, label) {
             currentAngleId = id;
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
             
-            // Пытаемся автоматически повернуть экран (сработает только на Android/PWA)
             try {
                 if (screen.orientation && screen.orientation.lock) {
                     await screen.orientation.lock('landscape');
                 }
-            } catch (e) {
-                console.log('Автоповорот не поддерживается (iOS)');
-            }
+            } catch (e) {}
 
             try {
                 const constraints = {
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    }
+                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
                 };
-                
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
             } catch (err) {
@@ -478,11 +548,8 @@
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
-            // Снимаем блокировку поворота (если была)
             try {
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
             } catch (e) {}
         }
 
@@ -492,24 +559,20 @@
             
             let vw = video.videoWidth;
             let vh = video.videoHeight;
-            
             const isLandscape = window.innerWidth > window.innerHeight;
             
             if (isLandscape && vw < vh) {
-                canvas.width = vh;
-                canvas.height = vw;
+                canvas.width = vh; canvas.height = vw;
                 context.translate(vh / 2, vw / 2);
                 context.rotate((90 * Math.PI) / 180);
                 context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
             } else if (!isLandscape && vw > vh) {
-                canvas.width = vh;
-                canvas.height = vw;
+                canvas.width = vh; canvas.height = vw;
                 context.translate(vh / 2, vw / 2);
                 context.rotate((-90 * Math.PI) / 180);
                 context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
             } else {
-                canvas.width = vw;
-                canvas.height = vh;
+                canvas.width = vw; canvas.height = vh;
                 context.drawImage(video, 0, 0, vw, vh);
             }
             
@@ -526,15 +589,13 @@
             }
 
             const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = finalWidth;
-            finalCanvas.height = finalHeight;
+            finalCanvas.width = finalWidth; finalCanvas.height = finalHeight;
             const finalCtx = finalCanvas.getContext('2d');
             finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
             
             capturedBase64 = finalCanvas.toDataURL('image/jpeg', 0.8);
             
             closeCamera();
-            
             previewImg.style.objectFit = 'cover';
             previewImg.src = capturedBase64;
             previewView.classList.add('active');
@@ -553,7 +614,6 @@
 
         function confirmPhoto() {
             previewView.classList.remove('active');
-            
             const card = document.getElementById(`card-${currentAngleId}`);
             let img = card.querySelector('.card-img');
             if (!img) {
@@ -562,21 +622,15 @@
                 card.appendChild(img);
             }
             img.src = capturedBase64;
-            
             card.classList.add('done');
             doneCount++;
             updateProgress();
-            
             capturedBase64 = null;
             currentAngleId = null;
         }
 
         function updateProgress() {
-            if (doneCount === angles.length) {
-                btnSend.disabled = false;
-            } else {
-                btnSend.disabled = true;
-            }
+            btnSend.disabled = doneCount !== angles.length;
         }
     </script>
 </body>
