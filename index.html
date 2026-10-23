@@ -314,7 +314,7 @@
                 context.drawImage(video, 0, 0, vw, vh);
             }
             
-            const MAX_SIZE = 1600;
+            const MAX_SIZE = 1200; // Уменьшили с 1600
             let finalWidth = canvas.width;
             let finalHeight = canvas.height;
             if (finalWidth > finalHeight && finalWidth > MAX_SIZE) {
@@ -327,7 +327,7 @@
             const finalCtx = finalCanvas.getContext('2d');
             finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
             
-            capturedBase64 = finalCanvas.toDataURL('image/jpeg', 0.8);
+            capturedBase64 = finalCanvas.toDataURL('image/jpeg', 0.6);
             closeCamera();
             previewImg.style.objectFit = 'cover';
             previewImg.src = capturedBase64;
@@ -367,7 +367,7 @@
         }
 
         function updateProgress() { 
-            btnSend.disabled = doneCount !== angles.length; 
+            btnSend.disabled = doneCount < 2;
         }
 
         // --- ОТПРАВКА НА СЕРВЕР ---
