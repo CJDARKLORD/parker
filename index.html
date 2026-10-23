@@ -187,64 +187,86 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             z-index: 2;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 40px 20px;
             pointer-events: none;
         }
 
         .camera-header {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
             font-size: 18px;
             font-weight: 600;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            width: 100%;
         }
 
+        /* Нормальный контур машины */
         .mask-svg {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
+            width: 85%;
+            max-width: 500px;
             height: auto;
-            opacity: 0.6;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
         }
 
-        .camera-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            pointer-events: auto;
-            padding-bottom: 20px;
-        }
-
+        /* Кнопка закрытия (всегда слева) */
         .btn-close {
-            width: 50px;
-            height: 50px;
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: none;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
+            pointer-events: auto;
+            z-index: 10;
         }
 
+        /* Кнопка спуска (всегда снизу по центру в портрете) */
         .btn-shutter {
-            width: 70px;
-            height: 70px;
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 76px;
+            height: 76px;
             border-radius: 50%;
             background: var(--accent);
             border: 4px solid white;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            z-index: 10;
+            transition: transform 0.1s;
         }
 
-        .btn-shutter:active { transform: scale(0.95); }
+        .btn-shutter:active { transform: translateX(-50%) scale(0.92); }
+        
+        /* Иконка фотоаппарата внутри кнопки */
+        .btn-shutter svg {
+            width: 32px;
+            height: 32px;
+            fill: none;
+            stroke: black;
+            stroke-width: 2;
+        }
 
-        /* ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН */
+        /* --- ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН --- */
         .rotate-hint {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -271,21 +293,37 @@
             100% { transform: rotate(-90deg); }
         }
 
+        /* --- ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) --- */
         @media (orientation: landscape) {
             .rotate-hint { display: none; }
-            .camera-overlay { padding: 20px; }
+            
             .camera-header {
-                position: absolute;
-                top: 20px; left: 50%; transform: translateX(-50%); width: 100%;
+                top: 20px;
             }
-            .camera-controls {
-                flex-direction: column; align-items: center; justify-content: center;
-                position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-                height: 100%; gap: 20px; padding-bottom: 0;
+            
+            /* Закрыть по центру слева */
+            .btn-close {
+                top: 50%;
+                transform: translateY(-50%);
+                left: 20px;
             }
-            .btn-close { position: absolute; top: 20px; left: 20px; }
-            .mask-svg { width: 70%; max-width: 600px; }
-            .btn-shutter { width: 80px; height: 80px; }
+            
+            /* Затвор по центру справа */
+            .btn-shutter {
+                top: 50%;
+                right: 30px;
+                left: auto;
+                bottom: auto;
+                transform: translateY(-50%);
+            }
+            
+            .btn-shutter:active {
+                transform: translateY(-50%) scale(0.92);
+            }
+
+            .mask-svg {
+                width: 70%;
+            }
         }
 
         /* --- ЭКРАН ПРЕВЬЮ --- */
@@ -299,13 +337,13 @@
             width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s;
         }
 
-        /* --- ЭКРАН ИНСТРУКЦИИ (ДЛЯ МЕССЕНДЖЕРОВ) --- */
+        /* --- ЭКРАН ИНСТРУКЦИИ --- */
         #browser-instruction {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background: var(--bg-color);
             z-index: 9999;
-            display: none; /* По умолчанию скрыт */
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -314,23 +352,11 @@
         }
         #browser-instruction.active { display: flex; }
         
-        .instruction-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-        .instruction-title {
-            font-size: 24px; font-weight: bold; margin-bottom: 12px; line-height: 1.3;
-        }
-        .instruction-text {
-            font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.5;
-        }
-        .instruction-arrow {
-            font-size: 40px; color: var(--accent); margin: 20px 0; animation: bounce 1s infinite alternate;
-        }
-        @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(10px); }
-        }
+        .instruction-icon { font-size: 60px; margin-bottom: 20px; }
+        .instruction-title { font-size: 24px; font-weight: bold; margin-bottom: 12px; line-height: 1.3; }
+        .instruction-text { font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.5; }
+        .instruction-arrow { font-size: 40px; color: var(--accent); margin: 20px 0; animation: bounce 1s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(10px); } }
         .instruction-btn {
             background: var(--accent); color: black; border: none; padding: 16px 32px;
             font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer;
@@ -351,7 +377,6 @@
         <div class="instruction-text">
             Вы открыли приложение внутри мессенджера. Из-за ограничений безопасности, <b>камера здесь не работает</b>.
         </div>
-        
         <div style="background: #1e1e1e; padding: 20px; border-radius: 12px; width: 100%; max-width: 300px; margin-bottom: 20px;">
             <div style="font-size: 15px; margin-bottom: 10px;">Как открыть в Safari/Chrome:</div>
             <div style="font-size: 14px; color: #aaa; text-align: left;">
@@ -359,9 +384,7 @@
                 <div id="android-instruction" style="display:none;">1. Нажмите на <b>три точки</b> в углу.<br>2. Выберите <b>«Открыть в браузере»</b>.</div>
             </div>
         </div>
-
         <div class="instruction-arrow">↑</div>
-
         <button class="instruction-btn" id="btn-open-browser">Попробовать открыть</button>
         <button class="instruction-skip" id="btn-skip-instruction">Я уже открыл в браузере</button>
     </div>
@@ -394,16 +417,29 @@
 
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
-            <svg class="mask-svg" viewBox="0 0 200 100" fill="none" stroke="white" stroke-width="2">
-                <path d="M 20,80 L 20,50 C 30,50 40,30 60,20 L 140,20 C 160,30 170,50 180,50 L 180,80 C 180,90 170,90 160,90 C 150,90 140,80 140,80 L 60,80 C 60,80 50,90 40,90 C 30,90 20,90 20,80 Z" />
-                <circle cx="50" cy="85" r="12" />
-                <circle cx="150" cy="85" r="12" />
+            
+            <!-- ПРОФЕССИОНАЛЬНЫЙ КОНТУР МАШИНЫ -->
+            <svg class="mask-svg" viewBox="0 0 400 180" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Кузов -->
+                <path d="M 30 130 L 20 130 C 10 130 5 120 5 110 L 5 80 C 5 60 15 50 45 45 L 110 35 C 140 15 180 10 230 15 C 280 20 320 40 340 70 L 360 75 C 375 80 380 90 380 105 L 380 120 C 380 125 375 130 365 130 L 350 130" />
+                <!-- Окна -->
+                <path d="M 120 40 L 150 20 L 200 20 L 200 40 Z" />
+                <path d="M 210 40 L 210 20 L 250 25 L 290 40 Z" />
+                <!-- Колеса -->
+                <circle cx="100" cy="130" r="35" />
+                <circle cx="280" cy="130" r="35" />
             </svg>
-            <div class="camera-controls">
-                <button class="btn-close" onclick="closeCamera()">✕</button>
-                <button class="btn-shutter" onclick="capturePhoto()"></button>
-                <div style="width: 50px; height: 50px;"></div>
-            </div>
+
+            <!-- Кнопка закрыть -->
+            <button class="btn-close" onclick="closeCamera()">✕</button>
+            
+            <!-- Кнопка спуска с иконкой фотоаппарата -->
+            <button class="btn-shutter" onclick="capturePhoto()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -422,33 +458,25 @@
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
             const isAndroid = /Android/.test(ua);
-            
-            // Определяем встроенные браузеры (Telegram, WhatsApp, VK, Instagram)
             const isTelegram = /Telegram/i.test(ua);
             const isWhatsApp = /WhatsApp/i.test(ua);
             const isVK = /VK/i.test(ua);
             const isInstagram = /Instagram/i.test(ua);
-            const isWebView = /wv/.test(ua) || (!/Safari/.test(ua) && isIOS); // WebView на Android или iOS
-            
+            const isWebView = /wv/.test(ua) || (!/Safari/.test(ua) && isIOS);
             const isMessenger = isTelegram || isWhatsApp || isVK || isInstagram || isWebView;
 
             if (isMessenger) {
                 document.getElementById('browser-instruction').classList.add('active');
-                
-                // Показываем нужную инструкцию
                 if (isIOS) {
                     document.getElementById('ios-instruction').style.display = 'block';
                 } else {
                     document.getElementById('android-instruction').style.display = 'block';
                 }
 
-                // Кнопка "Попробовать открыть"
                 document.getElementById('btn-open-browser').addEventListener('click', () => {
                     if (isIOS) {
-                        // Трюк для iOS: пытаемся открыть Safari
                         window.location.href = 'com-apple-mobilesafari-tab:' + window.location.href;
                     } else if (isAndroid) {
-                        // Трюк для Android: пытаемся открыть Chrome
                         const url = window.location.href.replace('https://', '');
                         window.location.href = 'intent://' + url + '#Intent;scheme=https;package=com.android.chrome;end';
                     }
@@ -456,12 +484,10 @@
             }
         }
 
-        // Кнопка "Я уже открыл в браузере" (на случай ложного срабатывания)
         document.getElementById('btn-skip-instruction').addEventListener('click', () => {
             document.getElementById('browser-instruction').classList.remove('active');
         });
 
-        // Запускаем проверку при загрузке
         window.addEventListener('load', checkBrowser);
 
         // --- ОСТАЛЬНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ---
