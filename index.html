@@ -386,7 +386,7 @@
 
             try {
                 // СЮДА ВСТАВЛЕНА ССЫЛКА ИЗ CLOUDFLARE
-                const response = await fetch('https://e1d357ce68da07aa-159-253-175-152.serveousercontent.com/api/upload', {
+                let url = format!("https://twilight-unit-df6e.cjdarklord.workers.dev/bot{}/sendMediaGroup", state.bot_token);
                     method: 'POST',
                     body: formData
                 });
