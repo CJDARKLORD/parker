@@ -39,7 +39,7 @@
         .camera-overlay { 
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
             z-index: 2; pointer-events: none; 
-            isolation: isolate; /* ВАЖНО: Помогает Safari правильно накладывать слои */
+            isolation: isolate; /* ВАЖНО для Safari */
         }
         
         .camera-header { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); text-align: center; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%; }
@@ -50,17 +50,13 @@
             transform: translate(-50%, -50%);
             width: 95%; max-width: 800px; height: auto;
             object-fit: contain;
-            mix-blend-mode: screen; /* Убирает черный фон! */
-            filter: contrast(3) brightness(1.5); /* ВЫКРУЧИВАЕТ ТЕМНО-СЕРЫЙ В АБСОЛЮТНО ЧЕРНЫЙ */
+            mix-blend-mode: screen;
+            filter: contrast(3) brightness(1.5); /* Убирает серый фон */
             opacity: 0.85;
             display: none; pointer-events: none;
         }
         #camera-mask.active { display: block; }
-        
-        /* Класс для отзеркаливания */
-        #camera-mask.flipped {
-            transform: translate(-50%, -50%) scaleX(-1);
-        }
+        #camera-mask.flipped { transform: translate(-50%, -50%) scaleX(-1); }
 
         .btn-close { position: absolute; top: 40px; left: 20px; width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; pointer-events: auto; z-index: 10; }
         .btn-shutter { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; background: var(--accent); border: 4px solid white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 10; transition: transform 0.1s; }
@@ -98,6 +94,7 @@
 </head>
 <body>
 
+    <!-- ЭКРАН ИНСТРУКЦИИ -->
     <div id="browser-instruction">
         <div class="instruction-icon">📱</div>
         <div class="instruction-title">Откройте ссылку<br>в браузере</div>
@@ -114,6 +111,7 @@
         <button class="instruction-skip" id="btn-skip-instruction">Я уже открыл в браузере</button>
     </div>
 
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
     <header>
         <h1>Фотоконтроль<br>машины</h1>
         <div class="subtitle">Сделайте 9 фото, чтобы менеджер подтвердил состояние автомобиля.</div>
@@ -122,8 +120,8 @@
     <div class="grid" id="grid"></div>
 
     <div class="bottom-bar">
-        <button class="btn btn-secondary" onclick="alert('Сброс макета')">Назад</button>
-        <button class="btn btn-primary" id="btn-send" disabled onclick="alert('Отправка на сервер...')">Отправить</button>
+        <button class="btn btn-secondary" onclick="window.location.reload()">Сброс</button>
+        <button class="btn btn-primary" id="btn-send" disabled>Отправить</button>
     </div>
 
     <!-- ЭКРАН КАМЕРЫ -->
@@ -148,6 +146,7 @@
         </div>
     </div>
 
+    <!-- ЭКРАН ПРЕВЬЮ -->
     <div id="preview-view">
         <img id="preview-img" src="" onclick="togglePreviewFit(this)">
         <div class="bottom-bar" style="background: black; border-top: none;">
@@ -157,6 +156,7 @@
     </div>
 
     <script>
+        // --- ПРОВЕРКА БРАУЗЕРА ---
         function checkBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -186,6 +186,7 @@
         });
         window.addEventListener('load', checkBrowser);
 
+        // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
         const angles = [
             { id: 'front', label: 'Спереди' },
             { id: 'back', label: 'Сзади' },
@@ -211,9 +212,11 @@
         let currentAngleId = null;
         let stream = null;
         let capturedBase64 = null;
+        let photosData = {}; // Здесь храним Base64 всех фото
 
         const cameraSvg = `<svg class="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`;
 
+        // Генерация карточек
         angles.forEach(angle => {
             const card = document.createElement('div');
             card.className = 'card';
@@ -236,12 +239,13 @@
             grid.appendChild(card);
         });
 
+        // Открытие камеры
         async function openCamera(id, label) {
             currentAngleId = id;
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
 
-            // ЛОГИКА ПОДСТАНОВКИ КАРТИНОК
+            // Выбор нужной маски
             cameraMask.classList.remove('active');
             cameraMask.classList.remove('flipped');
             
@@ -260,7 +264,7 @@
             } else if (id === 'right') {
                 cameraMask.src = 'mask-side.png';
                 cameraMask.classList.add('active');
-                cameraMask.classList.add('flipped'); // Отзеркаливаем для правой стороны
+                cameraMask.classList.add('flipped');
             } 
 
             try {
@@ -277,6 +281,7 @@
             }
         }
 
+        // Закрытие камеры
         function closeCamera() {
             cameraView.classList.remove('active');
             if (stream) {
@@ -288,6 +293,7 @@
             } catch (e) {}
         }
 
+        // Снимок
         function capturePhoto() {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
@@ -330,6 +336,7 @@
 
         function togglePreviewFit(img) { img.style.objectFit = img.style.objectFit === 'cover' ? 'contain' : 'cover'; }
         
+        // Переснять
         function retakePhoto() {
             previewView.classList.remove('active');
             capturedBase64 = null;
@@ -337,6 +344,7 @@
             openCamera(currentAngleId, angle.label);
         }
 
+        // Подтвердить фото
         function confirmPhoto() {
             previewView.classList.remove('active');
             const card = document.getElementById(`card-${currentAngleId}`);
@@ -348,13 +356,56 @@
             }
             img.src = capturedBase64;
             card.classList.add('done');
+            
+            // Сохраняем фото в объект для отправки
+            photosData[currentAngleId] = capturedBase64;
+            
             doneCount++;
             updateProgress();
             capturedBase64 = null;
             currentAngleId = null;
         }
 
-        function updateProgress() { btnSend.disabled = doneCount !== angles.length; }
+        function updateProgress() { 
+            btnSend.disabled = doneCount !== angles.length; 
+        }
+
+        // --- ОТПРАВКА НА СЕРВЕР ---
+        btnSend.addEventListener('click', async () => {
+            btnSend.disabled = true;
+            btnSend.innerText = "Отправка...";
+
+            const formData = new FormData();
+            
+            // Упаковываем все фото в FormData
+            for (const [id, base64] of Object.entries(photosData)) {
+                const res = await fetch(base64);
+                const blob = await res.blob();
+                formData.append('photos', blob, `${id}.jpg`);
+            }
+
+            try {
+                // СЮДА ВСТАВЛЕНА ССЫЛКА ИЗ CLOUDFLARE
+                const response = await fetch('https://learners-dylan-screenshots-preceding.trycloudflare.com/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Успех! Фото отправлены в Telegram.');
+                    window.location.reload(); 
+                } else {
+                    const errText = await response.text();
+                    alert('Ошибка сервера: ' + errText);
+                    btnSend.disabled = false;
+                    btnSend.innerText = "Отправить";
+                }
+            } catch (e) {
+                alert('Ошибка сети: ' + e.message);
+                btnSend.disabled = false;
+                btnSend.innerText = "Отправить";
+            }
+        });
     </script>
 </body>
 </html>
