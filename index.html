@@ -201,7 +201,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
-        /* Маска машины */
         .mask-svg {
             position: absolute;
             top: 50%; left: 50%;
@@ -245,11 +244,40 @@
 
         .btn-shutter:active { transform: scale(0.95); }
 
-        /* --- АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ ЭКРАН --- */
+        /* --- ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН --- */
+        .rotate-hint {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            pointer-events: none; /* чтобы можно было нажать крестик */
+        }
+
+        .rotate-hint svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            animation: rotatePhone 2s ease-in-out infinite;
+        }
+
+        @keyframes rotatePhone {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(-90deg); }
+        }
+
+        /* Скрываем подсказку, если телефон уже горизонтально */
         @media (orientation: landscape) {
-            .camera-overlay {
-                padding: 20px;
-            }
+            .rotate-hint { display: none; }
+            
+            .camera-overlay { padding: 20px; }
             .camera-header {
                 position: absolute;
                 top: 20px;
@@ -257,7 +285,6 @@
                 transform: translateX(-50%);
                 width: 100%;
             }
-            /* Переносим кнопки на правую сторону, как в настоящей камере */
             .camera-controls {
                 flex-direction: column;
                 align-items: center;
@@ -276,7 +303,7 @@
                 left: 20px;
             }
             .mask-svg {
-                width: 70%; /* Чуть уменьшаем, чтобы влезала в широкий экран */
+                width: 70%;
                 max-width: 600px;
             }
             .btn-shutter {
@@ -302,7 +329,6 @@
             object-fit: cover;
             transition: object-fit 0.2s;
         }
-
     </style>
 </head>
 <body>
@@ -323,10 +349,19 @@
     <div id="camera-view">
         <video id="video" autoplay playsinline muted></video>
         
+        <!-- ПОДСКАЗКА ПОВЕРНУТЬ ТЕЛЕФОН -->
+        <div class="rotate-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+            <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">Поверните телефон</div>
+            <div style="color: #aaa;">Для удобной съёмки машины<br>используйте горизонтальное положение</div>
+        </div>
+
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
-            <!-- Контур машины -->
             <svg class="mask-svg" viewBox="0 0 200 100" fill="none" stroke="white" stroke-width="2">
                 <path d="M 20,80 L 20,50 C 30,50 40,30 60,20 L 140,20 C 160,30 170,50 180,50 L 180,80 C 180,90 170,90 160,90 C 150,90 140,80 140,80 L 60,80 C 60,80 50,90 40,90 C 30,90 20,90 20,80 Z" />
                 <circle cx="50" cy="85" r="12" />
@@ -336,7 +371,6 @@
             <div class="camera-controls">
                 <button class="btn-close" onclick="closeCamera()">✕</button>
                 <button class="btn-shutter" onclick="capturePhoto()"></button>
-                <!-- Пустой блок для правильной центровки -->
                 <div style="width: 50px; height: 50px;"></div>
             </div>
         </div>
@@ -412,8 +446,16 @@
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
             
+            // Пытаемся автоматически повернуть экран (сработает только на Android/PWA)
             try {
-                // Запрашиваем камеру с максимальным разрешением
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            } catch (e) {
+                console.log('Автоповорот не поддерживается (iOS)');
+            }
+
+            try {
                 const constraints = {
                     video: { 
                         facingMode: 'environment',
@@ -436,6 +478,12 @@
                 stream.getTracks().forEach(track => track.stop());
                 stream = null;
             }
+            // Снимаем блокировку поворота (если была)
+            try {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            } catch (e) {}
         }
 
         function capturePhoto() {
@@ -445,10 +493,8 @@
             let vw = video.videoWidth;
             let vh = video.videoHeight;
             
-            // Проверяем, как сейчас повернут телефон
             const isLandscape = window.innerWidth > window.innerHeight;
             
-            // Если телефон горизонтально, а видео пришло вертикально (или наоборот) — исправляем
             if (isLandscape && vw < vh) {
                 canvas.width = vh;
                 canvas.height = vw;
@@ -467,7 +513,6 @@
                 context.drawImage(video, 0, 0, vw, vh);
             }
             
-            // Теперь сжимаем до 1600px по большей стороне
             const MAX_SIZE = 1600;
             let finalWidth = canvas.width;
             let finalHeight = canvas.height;
@@ -495,7 +540,6 @@
             previewView.classList.add('active');
         }
 
-        // Переключение вида превью по тапу (обрезано/целиком)
         function togglePreviewFit(img) {
             img.style.objectFit = img.style.objectFit === 'cover' ? 'contain' : 'cover';
         }
