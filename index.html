@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Фотоконтроль авто</title>
+    
+    <!-- Подключаем библиотеку масок -->
+    <script type="module">
+        import 'https://esm.sh/easyinspection-mask@0.0.6';
+    </script>
+
     <style>
+        /* ... (все стили остаются прежними, без изменений) ... */
         :root {
             --bg-color: #0f0f0f;
             --card-bg: #1e1e1e;
@@ -38,25 +45,10 @@
             z-index: 10;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 800;
-            line-height: 1.2;
-            margin-bottom: 8px;
-        }
+        h1 { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+        .subtitle { color: var(--text-muted); font-size: 15px; line-height: 1.4; }
 
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 15px;
-            line-height: 1.4;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 0 20px 20px;
-        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 20px; }
 
         .card {
             background-color: var(--card-bg);
@@ -75,283 +67,123 @@
 
         .card:active { transform: scale(0.97); }
         .card.done { border-color: var(--success); }
-
         .card.done::after {
             content: '✓';
             position: absolute;
-            top: 8px;
-            right: 8px;
-            background: var(--success);
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 14px;
-            z-index: 2;
+            top: 8px; right: 8px;
+            background: var(--success); color: white;
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 14px; z-index: 2;
         }
-
         .card.done .card-label { color: var(--text-muted); }
         .card.done .icon-camera { opacity: 0.1; }
 
         .card-label {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 2;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-            pointer-events: none;
+            position: absolute; bottom: 10px; left: 10px; right: 10px;
+            text-align: center; font-size: 14px; font-weight: 500;
+            z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none;
         }
 
-        .icon-camera {
-            width: 32px;
-            height: 32px;
-            opacity: 0.3;
-            margin-bottom: 15px;
-        }
+        .icon-camera { width: 32px; height: 32px; opacity: 0.3; margin-bottom: 15px; }
 
         .card-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            transition: opacity 0.3s;
+            width: 100%; height: 100%; object-fit: cover;
+            position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.3s;
         }
-
         .card.done .card-img { opacity: 1; }
 
         .bottom-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--bg-color);
-            padding: 16px 20px;
-            display: flex;
-            gap: 12px;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background-color: var(--bg-color); padding: 16px 20px;
+            display: flex; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05);
             z-index: 100;
         }
 
         .btn {
-            flex: 1;
-            height: 56px;
-            border-radius: 12px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            flex: 1; height: 56px; border-radius: 12px; border: none;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
             transition: opacity 0.2s;
         }
-
         .btn:active { opacity: 0.8; }
         .btn-secondary { background-color: #2c2c2c; color: white; }
         .btn-primary { background-color: var(--accent); color: black; }
         .btn-primary:disabled { background-color: #333; color: #666; cursor: not-allowed; }
 
-        /* --- ЭКРАН КАМЕРЫ --- */
         #camera-view {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: black;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: black; z-index: 1000; display: none; flex-direction: column;
         }
-
         #camera-view.active { display: flex; }
 
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0; left: 0;
-            z-index: 1;
+        /* Стили для видео внутри svg-mask */
+        #camera-view video {
+            width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1;
         }
 
         .camera-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 2;
-            pointer-events: none;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2; pointer-events: none;
         }
 
         .camera-header {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            font-size: 18px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            width: 100%;
+            position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+            text-align: center; font-size: 18px; font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); width: 100%;
         }
 
-        /* Нормальный контур машины */
-        .mask-svg {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            max-width: 500px;
-            height: auto;
-            opacity: 0.8;
-            filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));
-        }
+        /* Убираем старый mask-svg, так как теперь используется компонент svg-mask */
+        /* .mask-svg { ... } */
 
-        /* Кнопка закрытия (всегда слева) */
         .btn-close {
-            position: absolute;
-            top: 40px;
-            left: 20px;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            pointer-events: auto;
-            z-index: 10;
+            position: absolute; top: 40px; left: 20px; width: 44px; height: 44px;
+            border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-size: 20px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; pointer-events: auto; z-index: 10;
         }
 
-        /* Кнопка спуска (всегда снизу по центру в портрете) */
         .btn-shutter {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 76px;
-            height: 76px;
-            border-radius: 50%;
-            background: var(--accent);
-            border: 4px solid white;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: auto;
-            z-index: 10;
-            transition: transform 0.1s;
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 76px; height: 76px; border-radius: 50%; background: var(--accent);
+            border: 4px solid white; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            pointer-events: auto; z-index: 10; transition: transform 0.1s;
         }
-
         .btn-shutter:active { transform: translateX(-50%) scale(0.92); }
-        
-        /* Иконка фотоаппарата внутри кнопки */
-        .btn-shutter svg {
-            width: 32px;
-            height: 32px;
-            fill: none;
-            stroke: black;
-            stroke-width: 2;
-        }
+        .btn-shutter svg { width: 32px; height: 32px; fill: none; stroke: black; stroke-width: 2; }
 
-        /* --- ПОДСКАЗКА ПОВЕРНУТЬ ЭКРАН --- */
         .rotate-hint {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            pointer-events: none;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); z-index: 50;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center; padding: 20px; pointer-events: none;
         }
+        .rotate-hint svg { width: 80px; height: 80px; margin-bottom: 20px; animation: rotatePhone 2s ease-in-out infinite; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(-90deg); } }
 
-        .rotate-hint svg {
-            width: 80px; height: 80px; margin-bottom: 20px;
-            animation: rotatePhone 2s ease-in-out infinite;
-        }
-
-        @keyframes rotatePhone {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(-90deg); }
-        }
-
-        /* --- ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (LANDSCAPE) --- */
         @media (orientation: landscape) {
             .rotate-hint { display: none; }
-            
-            .camera-header {
-                top: 20px;
-            }
-            
-            /* Закрыть по центру слева */
-            .btn-close {
-                top: 50%;
-                transform: translateY(-50%);
-                left: 20px;
-            }
-            
-            /* Затвор по центру справа */
-            .btn-shutter {
-                top: 50%;
-                right: 30px;
-                left: auto;
-                bottom: auto;
-                transform: translateY(-50%);
-            }
-            
-            .btn-shutter:active {
-                transform: translateY(-50%) scale(0.92);
-            }
-
-            .mask-svg {
-                width: 70%;
-            }
+            .camera-header { top: 20px; }
+            .btn-close { top: 50%; transform: translateY(-50%); left: 20px; }
+            .btn-shutter { top: 50%; right: 30px; left: auto; bottom: auto; transform: translateY(-50%); }
+            .btn-shutter:active { transform: translateY(-50%) scale(0.92); }
         }
 
-        /* --- ЭКРАН ПРЕВЬЮ --- */
         #preview-view {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: #0f0f0f; z-index: 1000; display: none; flex-direction: column;
         }
         #preview-view.active { display: flex; }
-        #preview-img {
-            width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s;
-        }
+        #preview-img { width: 100%; height: 100%; object-fit: cover; transition: object-fit 0.2s; }
 
-        /* --- ЭКРАН ИНСТРУКЦИИ --- */
         #browser-instruction {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg-color);
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 30px 20px;
-            text-align: center;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color); z-index: 9999; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px 20px; text-align: center;
         }
         #browser-instruction.active { display: flex; }
-        
         .instruction-icon { font-size: 60px; margin-bottom: 20px; }
         .instruction-title { font-size: 24px; font-weight: bold; margin-bottom: 12px; line-height: 1.3; }
         .instruction-text { font-size: 16px; color: var(--text-muted); margin-bottom: 30px; line-height: 1.5; }
@@ -363,20 +195,17 @@
             width: 100%; max-width: 300px;
         }
         .instruction-skip {
-            margin-top: 20px; color: var(--text-muted); font-size: 14px; text-decoration: underline;
-            cursor: pointer; background: none; border: none;
+            margin-top: 20px; color: var(--text-muted); font-size: 14px;
+            text-decoration: underline; cursor: pointer; background: none; border: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- ЭКРАН ИНСТРУКЦИИ -->
     <div id="browser-instruction">
         <div class="instruction-icon">📱</div>
         <div class="instruction-title">Откройте ссылку<br>в браузере</div>
-        <div class="instruction-text">
-            Вы открыли приложение внутри мессенджера. Из-за ограничений безопасности, <b>камера здесь не работает</b>.
-        </div>
+        <div class="instruction-text">Вы открыли приложение внутри мессенджера. Из-за ограничений безопасности, <b>камера здесь не работает</b>.</div>
         <div style="background: #1e1e1e; padding: 20px; border-radius: 12px; width: 100%; max-width: 300px; margin-bottom: 20px;">
             <div style="font-size: 15px; margin-bottom: 10px;">Как открыть в Safari/Chrome:</div>
             <div style="font-size: 14px; color: #aaa; text-align: left;">
@@ -389,7 +218,6 @@
         <button class="instruction-skip" id="btn-skip-instruction">Я уже открыл в браузере</button>
     </div>
 
-    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
     <header>
         <h1>Фотоконтроль<br>машины</h1>
         <div class="subtitle">Сделайте 9 фото, чтобы менеджер подтвердил состояние автомобиля.</div>
@@ -402,9 +230,11 @@
         <button class="btn btn-primary" id="btn-send" disabled onclick="alert('Отправка на сервер...')">Отправить</button>
     </div>
 
-    <!-- ЭКРАН КАМЕРЫ -->
+    <!-- ЭКРАН КАМЕРЫ с компонентом svg-mask -->
     <div id="camera-view">
-        <video id="video" autoplay playsinline muted></video>
+        <svg-mask id="camera-mask" mask-name="small-vehicle-front" width="80%">
+            <video id="video" autoplay playsinline muted></video>
+        </svg-mask>
         
         <div class="rotate-hint">
             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -418,22 +248,8 @@
         <div class="camera-overlay">
             <div class="camera-header" id="camera-title">Сфотографируйте машину</div>
             
-            <!-- ПРОФЕССИОНАЛЬНЫЙ КОНТУР МАШИНЫ -->
-            <svg class="mask-svg" viewBox="0 0 400 180" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                <!-- Кузов -->
-                <path d="M 30 130 L 20 130 C 10 130 5 120 5 110 L 5 80 C 5 60 15 50 45 45 L 110 35 C 140 15 180 10 230 15 C 280 20 320 40 340 70 L 360 75 C 375 80 380 90 380 105 L 380 120 C 380 125 375 130 365 130 L 350 130" />
-                <!-- Окна -->
-                <path d="M 120 40 L 150 20 L 200 20 L 200 40 Z" />
-                <path d="M 210 40 L 210 20 L 250 25 L 290 40 Z" />
-                <!-- Колеса -->
-                <circle cx="100" cy="130" r="35" />
-                <circle cx="280" cy="130" r="35" />
-            </svg>
-
-            <!-- Кнопка закрыть -->
             <button class="btn-close" onclick="closeCamera()">✕</button>
             
-            <!-- Кнопка спуска с иконкой фотоаппарата -->
             <button class="btn-shutter" onclick="capturePhoto()">
                 <svg viewBox="0 0 24 24">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -443,7 +259,6 @@
         </div>
     </div>
 
-    <!-- ЭКРАН ПРЕВЬЮ -->
     <div id="preview-view">
         <img id="preview-img" src="" onclick="togglePreviewFit(this)">
         <div class="bottom-bar" style="background: black; border-top: none;">
@@ -453,7 +268,8 @@
     </div>
 
     <script>
-        // --- ПРОВЕРКА БРАУЗЕРА ---
+        // ... (скрипт остается практически таким же, меняется только функция openCamera) ...
+        
         function checkBrowser() {
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
@@ -467,16 +283,12 @@
 
             if (isMessenger) {
                 document.getElementById('browser-instruction').classList.add('active');
-                if (isIOS) {
-                    document.getElementById('ios-instruction').style.display = 'block';
-                } else {
-                    document.getElementById('android-instruction').style.display = 'block';
-                }
+                if (isIOS) document.getElementById('ios-instruction').style.display = 'block';
+                else document.getElementById('android-instruction').style.display = 'block';
 
                 document.getElementById('btn-open-browser').addEventListener('click', () => {
-                    if (isIOS) {
-                        window.location.href = 'com-apple-mobilesafari-tab:' + window.location.href;
-                    } else if (isAndroid) {
+                    if (isIOS) window.location.href = 'com-apple-mobilesafari-tab:' + window.location.href;
+                    else if (isAndroid) {
                         const url = window.location.href.replace('https://', '');
                         window.location.href = 'intent://' + url + '#Intent;scheme=https;package=com.android.chrome;end';
                     }
@@ -490,7 +302,6 @@
 
         window.addEventListener('load', checkBrowser);
 
-        // --- ОСТАЛЬНАЯ ЛОГИКА ПРИЛОЖЕНИЯ ---
         const angles = [
             { id: 'front', label: 'Спереди' },
             { id: 'back', label: 'Сзади' },
@@ -510,6 +321,7 @@
         const previewView = document.getElementById('preview-view');
         const previewImg = document.getElementById('preview-img');
         const cameraTitle = document.getElementById('camera-title');
+        const cameraMask = document.getElementById('camera-mask'); // Новый элемент
         
         let doneCount = 0;
         let currentAngleId = null;
@@ -522,10 +334,7 @@
             const card = document.createElement('div');
             card.className = 'card';
             card.id = `card-${angle.id}`;
-            card.innerHTML = `
-                ${cameraSvg}
-                <div class="card-label">${angle.label}</div>
-            `;
+            card.innerHTML = `${cameraSvg}<div class="card-label">${angle.label}</div>`;
 
             card.addEventListener('click', () => {
                 if (card.classList.contains('done')) {
@@ -541,7 +350,6 @@
                     openCamera(angle.id, angle.label);
                 }
             });
-
             grid.appendChild(card);
         });
 
@@ -549,17 +357,36 @@
             currentAngleId = id;
             cameraTitle.innerText = label;
             cameraView.classList.add('active');
+
+            // *** НОВОЕ: Устанавливаем маску в зависимости от ракурса ***
+            switch(id) {
+                case 'front':
+                    cameraMask.setAttribute('mask-name', 'small-vehicle-front');
+                    break;
+                case 'left':
+                    cameraMask.setAttribute('mask-name', 'small-vehicle-side-left');
+                    break;
+                case 'right':
+                    cameraMask.setAttribute('mask-name', 'small-vehicle-side-right');
+                    break;
+                case 'mileage':
+                    cameraMask.setAttribute('mask-name', 'odometer');
+                    break;
+                case 'oil':
+                    cameraMask.setAttribute('mask-name', 'chassi-motor');
+                    break;
+                default:
+                    // Для остальных ракурсов (багажник, салон) можно оставить дефолтную маску или убрать атрибут
+                    cameraMask.setAttribute('mask-name', ''); // или скрыть маску
+                    break;
+            }
             
             try {
-                if (screen.orientation && screen.orientation.lock) {
-                    await screen.orientation.lock('landscape');
-                }
+                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
             } catch (e) {}
 
             try {
-                const constraints = {
-                    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
-                };
+                const constraints = { video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } };
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
             } catch (err) {
@@ -582,20 +409,17 @@
         function capturePhoto() {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-            
             let vw = video.videoWidth;
             let vh = video.videoHeight;
             const isLandscape = window.innerWidth > window.innerHeight;
             
             if (isLandscape && vw < vh) {
                 canvas.width = vh; canvas.height = vw;
-                context.translate(vh / 2, vw / 2);
-                context.rotate((90 * Math.PI) / 180);
+                context.translate(vh / 2, vw / 2); context.rotate((90 * Math.PI) / 180);
                 context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
             } else if (!isLandscape && vw > vh) {
                 canvas.width = vh; canvas.height = vw;
-                context.translate(vh / 2, vw / 2);
-                context.rotate((-90 * Math.PI) / 180);
+                context.translate(vh / 2, vw / 2); context.rotate((-90 * Math.PI) / 180);
                 context.drawImage(video, -vw / 2, -vh / 2, vw, vh);
             } else {
                 canvas.width = vw; canvas.height = vh;
@@ -605,13 +429,10 @@
             const MAX_SIZE = 1600;
             let finalWidth = canvas.width;
             let finalHeight = canvas.height;
-
             if (finalWidth > finalHeight && finalWidth > MAX_SIZE) {
-                finalHeight = Math.round(finalHeight * (MAX_SIZE / finalWidth));
-                finalWidth = MAX_SIZE;
+                finalHeight = Math.round(finalHeight * (MAX_SIZE / finalWidth)); finalWidth = MAX_SIZE;
             } else if (finalHeight > MAX_SIZE) {
-                finalWidth = Math.round(finalWidth * (MAX_SIZE / finalHeight));
-                finalHeight = MAX_SIZE;
+                finalWidth = Math.round(finalWidth * (MAX_SIZE / finalHeight)); finalHeight = MAX_SIZE;
             }
 
             const finalCanvas = document.createElement('canvas');
@@ -620,7 +441,6 @@
             finalCtx.drawImage(canvas, 0, 0, finalWidth, finalHeight);
             
             capturedBase64 = finalCanvas.toDataURL('image/jpeg', 0.8);
-            
             closeCamera();
             previewImg.style.objectFit = 'cover';
             previewImg.src = capturedBase64;
@@ -655,9 +475,7 @@
             currentAngleId = null;
         }
 
-        function updateProgress() {
-            btnSend.disabled = doneCount !== angles.length;
-        }
+        function updateProgress() { btnSend.disabled = doneCount !== angles.length; }
     </script>
 </body>
 </html>
