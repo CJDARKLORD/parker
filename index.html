@@ -377,7 +377,6 @@
 
             const formData = new FormData();
             
-            // Упаковываем все фото в FormData
             for (const [id, base64] of Object.entries(photosData)) {
                 const res = await fetch(base64);
                 const blob = await res.blob();
@@ -385,8 +384,8 @@
             }
 
             try {
-                // СЮДА ВСТАВЛЕНА ССЫЛКА ИЗ CLOUDFLARE
-                const response = await fetch('https://exwfl-159-253-175-152.free.pinggy.net/api/upload', {
+                // ОТПРАВЛЯЕМ НАПРЯМУЮ В CLOUDFLARE WORKER (без Python!)
+                const response = await fetch('https://api.tenlux.tech/upload', {
                     method: 'POST',
                     body: formData
                 });
